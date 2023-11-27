@@ -1,0 +1,11 @@
+[Unit]
+Requires=network.target
+Description=Room Temperature Microwave Switch Server
+
+[Service]
+Type=simple
+ExecStart=/home/superuser/.local/bin/rt-switch-server /home/superuser/rt-switch/config.toml
+User=superuser
+
+[Install]
+WantedBy=multi-user.target

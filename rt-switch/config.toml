@@ -1,0 +1,4 @@
+pin_1=13 # We are using board numbers, not the BCM numbers
+pin_2=15
+
+pulse_length=0.5 # in seconds
