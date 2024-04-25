@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ganymed"
+dynamic = ["version"]
+description = 'Ganymed Jupyter Lab Notebook Monitor and Logger'
+readme = "README.md"
+requires-python = ">=3.7"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "T. Krumrey"},
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "jupyter_server","influxdb_client","requests"
+]
+
+[project.scripts]
+ganymed="ganymed.ganymed:main"
+
+[project.urls]
+Documentation = "https://github.com/qkitgroup/qkit-services/ganymed"
+Issues = "https://github.com/qkitgroup/qkit-services/issues"
+Source = "https://github.com/qkitgroup/qkit-services/"
+
+[tool.hatch.version]
+path = "src/ganymed/__about__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ganymed"]
