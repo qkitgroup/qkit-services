@@ -10,7 +10,7 @@ import sched
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS, WritePrecision
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] [%(name)s] %(message)s')
+logging.basicConfig(level=logging.WARNING, format='%(asctime)s [%(levelname)s] [%(name)s] %(message)s')
 log = logging.getLogger("KernelStatus")
 
 def report_kernel_status() -> Generator[str, bool, datetime]:
@@ -44,16 +44,15 @@ def report_kernel_status() -> Generator[str, bool, datetime]:
                         last_activity = datetime.now()
                     yield (notebook_path, active, last_activity)
 
-def report_to_influx(config: dict, machine: str, path: str, active_data: datetime):
+def report_to_influx(config: dict, machine: str, active_data: datetime):
     """
-    Report, for the given machine, the last active file, and when it was last seen active.
+    Report for the given machine when it was last seen active.
     """
 
     client = InfluxDBClient(url=config['url'], token=config['token'], org=config['org'])
 
     datum = Point.measurement("kernel_status")\
         .tag("machine", machine)\
-        .field("active_notebook", path)\
         .time(active_data, WritePrecision.NS)
     
     write_api = client.write_api(write_options=SYNCHRONOUS)
@@ -63,7 +62,7 @@ def report_to_influx(config: dict, machine: str, path: str, active_data: datetim
 
 def periodic_report(scheduler: sched.scheduler, config: dict):
     # Reenter the scheduler
-    scheduler.enter(float(config['every']), 1, periodic_report, (scheduler, config))
+    scheduler.enter(float(config['interval']['every']), 1, periodic_report, (scheduler, config))
 
     # Get the reports
     log.info("Fetching kernel status...")
@@ -72,14 +71,15 @@ def periodic_report(scheduler: sched.scheduler, config: dict):
         log.info("%s Kernel(s) found. Last active:", len(reports))
         path, active, last_seen = reports[0]
         log.info(f"{path}\t{'active' if active else f'idle'}\t{last_seen}")
-        if datetime.now(tz=timezone.utc) - last_seen < timedelta(seconds=config['every']*1.5):
+        if datetime.now(tz=timezone.utc) - last_seen < timedelta(seconds=config['interval']['every']*1.5):
             # Fresh, so report it
-            report_to_influx(config['influx'], socket.gethostname(), path, last_seen)
-            log.info("Reported to InfluxDB")
+            # We do not report the path of the notebook, as it may contain sensitive information and is a GDPR nightmare
+            report_to_influx(config['influx'], socket.gethostname(), last_seen)
+            log.debug("Reported to InfluxDB")
         else:
-            log.info("Not reporting to InfluxDB, too old")
+            log.debug("Not reporting to InfluxDB, too old")
     else:
-        log.info("No kernels found")
+        log.debug("No kernels found")
 
 
 def main():
@@ -90,8 +90,9 @@ def main():
     log.info("Starting Ganymed...")
     log.info("Reading configuration from %s", args.server_config)
 
-    import tomli
-    config = tomli.load(open(args.server_config, 'rb'))
+    from configparser import ConfigParser
+    config = ConfigParser()
+    config.read(args.server_config)
     
     scheduler = sched.scheduler()
     periodic_report(scheduler, config)
