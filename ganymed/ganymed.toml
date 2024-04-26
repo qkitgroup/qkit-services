@@ -1,7 +1,0 @@
-every=60 # seconds
-
-[influx]
-url="Some URL"
-token="Some Token"
-org="Some Org"
-bucket="Some Bucket"
