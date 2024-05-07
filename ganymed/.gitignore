@@ -1,1 +1,3 @@
 __pycache__
+.idea
+ganymed.cfg # Confguration has a token and should not be stored in git.
