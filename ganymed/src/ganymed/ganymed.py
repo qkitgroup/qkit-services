@@ -10,7 +10,7 @@ import sched
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS, WritePrecision
 
-logging.basicConfig(level=logging.WARNING, format='%(asctime)s [%(levelname)s] [%(name)s] %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] [%(name)s] %(message)s')
 log = logging.getLogger("KernelStatus")
 
 def report_kernel_status() -> Generator[str, bool, datetime]:
@@ -36,12 +36,14 @@ def report_kernel_status() -> Generator[str, bool, datetime]:
             if response.status_code == 200: # Server responded properly, otherwise assume offline
                 sessions = response.json()
                 for session in sessions: # Extract data for every session
+                    if session['type'] != 'notebook':
+                        continue
                     notebook_path = session['notebook']['path']
                     active = session['kernel']['execution_state'] != "idle"
                     last_activity = datetime.strptime(session['kernel']['last_activity'], "%Y-%m-%dT%H:%M:%S.%f%z")
                     # If the kernel is active, set the last activity to now
                     if active:
-                        last_activity = datetime.now()
+                        last_activity = datetime.now(tz=timezone.utc)
                     yield (notebook_path, active, last_activity)
 
 def report_to_influx(config: dict, machine: str, active_data: datetime):
@@ -52,6 +54,7 @@ def report_to_influx(config: dict, machine: str, active_data: datetime):
     client = InfluxDBClient(url=config['url'], token=config['token'], org=config['org'])
 
     datum = Point.measurement("kernel_status")\
+        .field("presence", 1)\
         .tag("machine", machine)\
         .time(active_data, WritePrecision.NS)
     
@@ -71,7 +74,7 @@ def periodic_report(scheduler: sched.scheduler, config: dict):
         log.info("%s Kernel(s) found. Last active:", len(reports))
         path, active, last_seen = reports[0]
         log.info(f"{path}\t{'active' if active else f'idle'}\t{last_seen}")
-        if datetime.now(tz=timezone.utc) - last_seen < timedelta(seconds=config['interval']['every']*1.5):
+        if datetime.now(tz=timezone.utc) - last_seen < timedelta(seconds=int(config['interval']['every'])*1.5):
             # Fresh, so report it
             # We do not report the path of the notebook, as it may contain sensitive information and is a GDPR nightmare
             report_to_influx(config['influx'], socket.gethostname(), last_seen)
