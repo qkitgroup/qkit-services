@@ -46,21 +46,22 @@ def report_kernel_status() -> Generator[str, bool, datetime]:
                         last_activity = datetime.now(tz=timezone.utc)
                     yield (notebook_path, active, last_activity)
 
-def report_to_influx(config: dict, machine: str, active_data: datetime):
+def report_to_influx(config: dict, machine: str, currently_active: bool):
     """
     Report for the given machine when it was last seen active.
     """
-
+    log.info("Repoting: %s is %s", machine, "active" if currently_active else "idle")
     client = InfluxDBClient(url=config['url'], token=config['token'], org=config['org'])
 
     datum = Point.measurement("kernel_status")\
-        .field("presence", 1)\
+        .field("active", 1 if currently_active else 0)\
         .tag("machine", machine)\
-        .time(active_data, WritePrecision.NS)
+        .time(datetime.now(tz=timezone.utc), WritePrecision.NS)
     
     write_api = client.write_api(write_options=SYNCHRONOUS)
 
     write_api.write(bucket = config['bucket'], record = datum)
+    log.debug("Report sent.")
 
 
 def periodic_report(scheduler: sched.scheduler, config: dict):
@@ -74,15 +75,12 @@ def periodic_report(scheduler: sched.scheduler, config: dict):
         log.info("%s Kernel(s) found. Last active:", len(reports))
         path, active, last_seen = reports[0]
         log.info(f"{path}\t{'active' if active else f'idle'}\t{last_seen}")
-        if datetime.now(tz=timezone.utc) - last_seen < timedelta(seconds=int(config['interval']['every'])*1.5):
-            # Fresh, so report it
-            # We do not report the path of the notebook, as it may contain sensitive information and is a GDPR nightmare
-            report_to_influx(config['influx'], socket.gethostname(), last_seen)
-            log.debug("Reported to InfluxDB")
-        else:
-            log.debug("Not reporting to InfluxDB, too old")
+        currently_active = datetime.now(tz=timezone.utc) - last_seen < timedelta(seconds=int(config['interval']['every'])*1.5)
     else:
         log.debug("No kernels found")
+        currently_active = False
+    
+    report_to_influx(config['influx'], socket.gethostname(), currently_active)
 
 
 def main():
