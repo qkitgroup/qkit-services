@@ -39,7 +39,7 @@ def report_kernel_status() -> Generator[str, bool, datetime]:
                     if session['type'] != 'notebook':
                         continue
                     notebook_path = session['notebook']['path']
-                    active = session['kernel']['execution_state'] != "idle"
+                    active = session['kernel']['execution_state'] == "busy" # We don't count idle nor starting as active.
                     last_activity = datetime.strptime(session['kernel']['last_activity'], "%Y-%m-%dT%H:%M:%S.%f%z")
                     yield (notebook_path, active, last_activity)
 
