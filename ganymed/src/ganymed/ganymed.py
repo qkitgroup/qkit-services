@@ -54,7 +54,7 @@ def report_to_influx(config: dict, machine: str, currently_active: bool):
     client = InfluxDBClient(url=config['url'], token=config['token'], org=config['org'])
 
     datum = Point.measurement("kernel_status")\
-        .field("active", 1 if currently_active else 0)\
+        .field("presence", 1 if currently_active else 0)\
         .tag("machine", machine)\
         .time(datetime.now(tz=timezone.utc), WritePrecision.NS)
     
