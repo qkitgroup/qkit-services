@@ -41,9 +41,6 @@ def report_kernel_status() -> Generator[str, bool, datetime]:
                     notebook_path = session['notebook']['path']
                     active = session['kernel']['execution_state'] != "idle"
                     last_activity = datetime.strptime(session['kernel']['last_activity'], "%Y-%m-%dT%H:%M:%S.%f%z")
-                    # If the kernel is active, set the last activity to now
-                    if active:
-                        last_activity = datetime.now(tz=timezone.utc)
                     yield (notebook_path, active, last_activity)
 
 def report_to_influx(config: dict, machine: str, currently_active: bool):
@@ -75,7 +72,7 @@ def periodic_report(scheduler: sched.scheduler, config: dict):
         log.info("%s Kernel(s) found. Last active:", len(reports))
         path, active, last_seen = reports[0]
         log.info(f"{path}\t{'active' if active else f'idle'}\t{last_seen}")
-        currently_active = datetime.now(tz=timezone.utc) - last_seen < timedelta(seconds=int(config['interval']['every'])*1.5)
+        currently_active = active or (datetime.now(tz=timezone.utc) - last_seen < timedelta(seconds=int(config['interval']['every'])*1.5))
     else:
         log.debug("No kernels found")
         currently_active = False
