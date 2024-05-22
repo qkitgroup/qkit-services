@@ -29,7 +29,7 @@ def report_kernel_status() -> Generator[str, bool, datetime]:
 
         try:
             token_payload = {"token": token}
-            response = requests.get(url, params=token_payload)
+            response = requests.get(url, params=token_payload, timeout=5)
         except Exception as e:
             log.error(f"Connection failed: {e}")
         else:
