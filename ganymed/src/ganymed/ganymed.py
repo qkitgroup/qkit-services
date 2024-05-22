@@ -50,7 +50,7 @@ def report_to_influx(config: dict, machine: str, currently_active: bool):
     """
     Report for the given machine when it was last seen active.
     """
-    log.info("Repoting: %s is %s", machine, "active" if currently_active else "idle")
+    log.info("Reporting: %s is %s", machine, "active" if currently_active else "idle")
     client = InfluxDBClient(url=config['url'], token=config['token'], org=config['org'])
 
     datum = Point.measurement("kernel_status")\
