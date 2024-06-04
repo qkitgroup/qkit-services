@@ -23,7 +23,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
-  "Jupyter :: JupyterLab",
+  "Framework :: Jupyter :: JupyterLab :: Extensions",
 ]
 dependencies = [
   "jupyter_server","influxdb_client"
