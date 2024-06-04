@@ -17,7 +17,7 @@ class GanymedServer(ExtensionApp):
     load_other_extensions = True
 
     # Configuration Options
-    interval = Int(10, config=True, help="Interval for reporting status.")
+    interval = Int(120, config=True, help="Interval for reporting status.")
     influx_address = Unicode("", config=True, help="InfluxDB Address.")
     influx_token = Unicode("", config=True, help="InfluxDB Token.")
     influx_org = Unicode("", config=True, help="InfluxDB Org.")

@@ -39,3 +39,6 @@ path = "src/ganymed/__about__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ganymed"]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"jupyter-config/jupyter_server_config.d/ganymed.json" = "etc/jupyter/jupyter_server_config.d/ganymed.json"
