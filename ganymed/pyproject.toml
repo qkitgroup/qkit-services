@@ -23,13 +23,11 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
+  "Jupyter :: JupyterLab",
 ]
 dependencies = [
-  "jupyter_server","influxdb_client","requests"
+  "jupyter_server","influxdb_client"
 ]
-
-[project.scripts]
-ganymed="ganymed.ganymed:main"
 
 [project.urls]
 Documentation = "https://github.com/qkitgroup/qkit-services/ganymed"
